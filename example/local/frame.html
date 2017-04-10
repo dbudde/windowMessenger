@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Content From iFrame</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+
+	<!-- jQuery UI CSS -->
+	<link href="https://code.jquery.com/ui/1.12.0/themes/smoothness/jquery-ui.css" rel="stylesheet" />
+
+	<style>
+		body {
+			background-color: #f2f7ff;
+			margin: 0px;
+			padding: 0px;
+		}
+
+		body.red {
+			background-color: #fff2f2;
+		}
+
+		body.green {
+			background-color: #f3fff2;
+		}
+
+		body.yellow {
+			background-color: #fffef2;
+		}
+
+		td {
+			padding: 4px;
+		}
+
+		#messageBoxTitle {
+			font-weight: bold;
+		}
+	</style>
+
+	<!-- jQuery -->
+	<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+	<!-- Bootstrap Core JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+	<!-- jQuery UI - after bootstrap -->
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+
+	<script src="https://cdn.rawgit.com/dbudde/windowMessenger/396ede2c/windowMessenger.js" data-autoregister="true"></script>
+
+	<script type="text/javascript">
+		// Example 1 - Message Received
+		var setMessage = function(title, message, color)
+		{
+			var bodyClass = "frame",
+				boxClass = "alert alert-info";
+
+
+			if (color === "green")
+			{
+				bodyClass = "frame green",
+				boxClass = "alert alert-success";
+			}
+			else if (color === "red")
+			{
+				bodyClass = "frame red",
+				boxClass = "alert alert-danger";
+			}
+			else if (color === "yellow")
+			{
+				bodyClass = "frame yellow",
+				boxClass = "alert alert-warning";
+			}
+
+
+			$("#messageBox").removeClass().addClass(boxClass);
+			$("body").removeClass().addClass(bodyClass);
+			$("#messageBoxTitle").html(title);
+			$("#messageBoxText").html(message);
+		}
+
+
+		// Example 2 - Message Received
+		// This message is interpreted by the window messenger and is executed directly. Makes a call to 'setMessage'.
+
+
+		// Example 3 - Message Received
+		$(window).on(
+			"messageReceived",
+			function(ev, message, id)
+			{
+				console.log("-=Example 3 Listener Arguments=-");
+				console.log(arguments);
+
+				setMessage(message.title, message.message, "green");
+			}
+		);
+
+
+		$(window).load(
+			function()
+			{
+				// Example 4 - Message Sent
+				$("#ex4").on(
+					"click",
+					function()
+					{
+						var message = "This is an example of executing an existing method that is located in the parent window.",
+							title = "Example 4 - Execute Parent Window Function";
+
+						$(window).messenger("execute", "root.container.actionator.openMessage", [title, message]);
+					}
+				);
+
+
+				// Example 5 - Message Sent
+				$("#ex5").on(
+					"click",
+					function()
+					{
+						var message = "This is an example of executing a function object passed to the parent window and executed in the parent.",
+							title = "Example 5 - Execute Passed Function";
+
+						var openMessage = function(title, message)
+						{
+							var div = $("<div>" + message + "</div>").appendTo("body");
+			
+							div.dialog(
+								{
+									autoOpen: true,
+									close: function(ev, ui)
+									{
+										$(this).dialog("destroy").remove();
+									},
+									draggable: true,
+									height: 200,
+									modal: true,
+									resizable: true,
+									show: {effect: "fade", duration: 300},
+									title: title,
+									width: 500
+								}
+							);
+						};
+
+						$(window).messenger("execute", openMessage, [title, message]);
+					}
+				);
+
+
+				// Example 6 - Message Sent
+				$("#ex6").on(
+					"click",
+					function()
+					{
+						var message = 	"<p>This is just a simple text message that was posted from the iFrame to the parent window. " +
+										"The message being passed can also be any object that is allowed by the 'window.postMessage' " +
+										"method.</p><p>On the parent window, any listener that is attached to the window's 'messageReceived' " +
+										"event will receive the message and an optional identifier in the method arguments. For this " +
+										"example, a call to 'console.log(arguments)' has been left in place to show what is passed to " +
+										"the listener.</p>";
+
+						$(window).messenger("post", message, "frameButtonEx6");
+					}
+				);
+			}
+		);
+	</script>
+</head>
+
+<body class="frame">
+
+    <!-- Page Content -->
+    <div class="container frame">
+        <div class="row">
+            <div class="col-md-12 col-sm-12">
+                <h3>Frame</h3>
+                <div style="margin-bottom: 10px;">
+					<table>
+						<tr>
+							<td>
+								Example 4 -
+							</td>
+							<td>
+								<button id="ex4" type="button">
+									Execute Parent Window Method
+								</button>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Example 5 -
+							</td>
+							<td>
+								<button id="ex5" type="button">
+									Execute Method Passed to Parent Window
+								</button>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Example 6 -
+							</td>
+							<td>
+								<button id="ex6" type="button">
+									Message Passed to Parent
+								</button>
+							</td>
+						</tr>
+					</table>
+                </div>
+                <div id="messageBox" class="alert alert-info">
+                	<div id="messageBoxTitle">Notice</div>
+                	<div id="messageBoxText">
+                		Messages sent from the parent window will be displayed here.
+                	</div>
+                </div>
+            </div>
+        </div>
+        <!-- /.row -->
+    </div>
+    <!-- /.container -->
+
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html class="full" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Window Messenger Example</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+
+	<!-- jQuery UI CSS -->
+	<link href="https://code.jquery.com/ui/1.12.0/themes/smoothness/jquery-ui.css" rel="stylesheet" />
+
+	<style>
+		body {
+			margin-top: 50px;
+			margin-bottom: 50px;
+			background: none;
+		}
+
+		iframe {
+			border: none;
+			width: 100%;
+		}
+
+		td {
+			padding: 4px;
+		}
+
+		div.main {
+			background-color: #ffffff;
+			border: 1px solid #000000;
+			border-radius: 6px;
+			padding: 6px 10px;
+		}
+
+		.full {
+			background-color: #dddddd;
+			-webkit-background-size: cover;
+			-moz-background-size: cover;
+			-o-background-size: cover;
+			background-size: cover;
+		}
+	</style>
+
+
+
+	<!-- jQuery -->
+	<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+	<!-- Bootstrap Core JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+	<!-- jQuery UI - after bootstrap -->
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+
+	<script src="https://cdn.rawgit.com/dbudde/windowMessenger/396ede2c/windowMessenger.js" data-autoregister="true"></script>
+
+	<script type="text/javascript">
+		$(window).load(
+			function()
+			{
+				// Example 1 - Message Sent
+				$("#ex1").on(
+					"click",
+					function()
+					{
+						var message = "This is an example of executing an existing method that is located in the child iFrame.",
+							title = "Example 1 - Execute iFrame Function";
+
+						$(window).messenger("execute", "setMessage", [title, message, "yellow"]);
+					}
+				);
+
+
+				// Example 2 - Message Sent
+				$("#ex2").on(
+					"click",
+					function()
+					{
+						var messageMethod = function()
+						{
+							var message = "This is an example of executing a function created in the parent window within the child iFrame.",
+								title = "Example 2 - Execute Function Passed to iFrame";
+
+							setMessage(title, message, "red");
+						};
+
+						$(window).messenger("execute", messageMethod);
+					}
+				);
+
+
+				// Example 3 - Message Sent
+				$("#ex3").on(
+					"click",
+					function()
+					{
+						var message = "This is an example of a message passed from the parent window to the iFrame and the iFrame's event listener caught it.",
+							title = "Example 3 - Message Passed to iFrame";
+
+						$(window).messenger("post", {message: message, title: title}, "winButton3");
+					}
+				);
+			}
+		);
+
+
+		// Example 4 - Message Received
+		// This is the method that is called.
+		var root = {};
+
+		root.container = {};
+
+		root.container.actionator =
+		{
+			openMessage: function(title, message)
+			{
+				var div = $("<div>" + message + "</div>").appendTo("body");
+
+				div.dialog(
+					{
+						autoOpen: true,
+						close: function(ev, ui)
+						{
+							$(this).dialog("destroy").remove();
+						},
+						draggable: true,
+						height: 200,
+						modal: true,
+						resizable: true,
+						show: {effect: "fade", duration: 300},
+						title: title,
+						width: 500
+					}
+				);
+			}
+		};
+
+
+		// Example 5 - Message Received
+		// The received message is a function that is directly processed by the windowMessenger.
+
+
+		// Example 6 - Message Received
+		// This is the listener that is waiting for a message to be sent.
+		$(window).on(
+			"messageReceived",
+			function(ev, message, id)
+			{
+				console.log("-=Example 6 Listener Arguments=-");
+				console.log(arguments);
+
+				var div = $("<div>" + message + "</div>").appendTo("body");
+
+				div.dialog(
+					{
+						autoOpen: true,
+						close: function(ev, ui)
+						{
+							$(this).dialog("destroy").remove();
+						},
+						draggable: true,
+						height: 260,
+						modal: true,
+						resizable: true,
+						show: {effect: "fade", duration: 300},
+						title: "Example 6 - Message Received - $(window).on('messageReceived')",
+						width: 700
+					}
+				);
+			}
+		);
+	</script>
+</head>
+
+<body>
+
+	<div class="container main">
+		<div class="row">
+			<div class="col-md-8 col-sm-12">
+				<h1>Window Messenger Same Domain Example</h1>
+				<p>
+					This is an example of how window messenger can allow communication between windows on the
+					same domain. In this example the parent and child windows can send messages back and forth 
+					causing changes to occur in each other. Click the buttons in each window to see changes take 
+					affect.
+				</p>
+
+                <div style="margin-bottom: 30px;">
+					<table>
+						<tr>
+							<td>
+								Example 1 -
+							</td>
+							<td>
+								<button id="ex1" type="button">
+									Execute iFrame Method
+								</button>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Example 2 -
+							</td>
+							<td>
+								<button id="ex2" type="button">
+									Execute Method Passed to iFrame
+								</button>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Example 3 -
+							</td>
+							<td>
+								<button id="ex3" type="button">
+									Message Passed to iFrame
+								</button>
+							</td>
+						</tr>
+					</table>
+                </div>
+
+				<iframe src="frame.html" style="height: 400px;"></iframe>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
