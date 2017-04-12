@@ -107,7 +107,15 @@
 			function()
 			{
 				// Register parent window.
-				$(window).messenger("registerWindow", "parent", window.parent, window.location.origin, true);
+				var origin = window.location.origin;  // Should be the same as parent.
+
+				// Correct for running on local file system.
+				if (origin.substr(0, 4).toLowerCase() === "file")
+				{
+					origin = "*";
+				}
+
+				$(window).messenger("registerWindow", "parent", window.parent, , true);
 
 
 				// Example 4 - Message Sent

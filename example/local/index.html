@@ -69,6 +69,7 @@
 				var childFrame = $("#childFrame")[0],
 					origin = window.location.origin;	// Local example means origin should be the same as iFrame
 
+				// Correct for running on local file system.
 				if (origin.substr(0, 4).toLowerCase() === "file")
 				{
 					origin = "*";
