@@ -52,7 +52,7 @@
 	<!-- jQuery UI - after bootstrap -->
 	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
 
-	<script src="https://cdn.rawgit.com/dbudde/windowMessenger/396ede2c/windowMessenger.js" data-autoregister="true"></script>
+	<script src="https://cdn.rawgit.com/dbudde/windowMessenger/396ede2c/windowMessenger.js"></script>
 
 	<script type="text/javascript">
 		// Example 1 - Message Received
@@ -64,17 +64,17 @@
 
 			if (color === "green")
 			{
-				bodyClass = "frame green",
+				bodyClass = "frame green";
 				boxClass = "alert alert-success";
 			}
 			else if (color === "red")
 			{
-				bodyClass = "frame red",
+				bodyClass = "frame red";
 				boxClass = "alert alert-danger";
 			}
 			else if (color === "yellow")
 			{
-				bodyClass = "frame yellow",
+				bodyClass = "frame yellow";
 				boxClass = "alert alert-warning";
 			}
 
@@ -106,6 +106,10 @@
 		$(window).load(
 			function()
 			{
+				// Register parent window.
+				$(window).messenger("registerWindow", "parent", window.parent, window.location.origin, true);
+
+
 				// Example 4 - Message Sent
 				$("#ex4").on(
 					"click",

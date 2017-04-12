@@ -51,6 +51,15 @@ if (jQuery != undefined && window.postMessage != undefined)
 				/*************************/
 				/*    Public Methods     */
 				/*************************/
+				addTrustedOrigin: function(origin)
+				{
+					if (this._isType(origin, "string"))
+					{
+						this._trustedOrigins[origin.toLowerCase()] = true;
+					}
+				},
+
+
 				execute: function(method, args, windowName)
 				{
 					var message = {method: null, args: null, context: null};
@@ -73,19 +82,38 @@ if (jQuery != undefined && window.postMessage != undefined)
 				},
 
 
+				getTrustedOrigins: function()
+				{
+					var key = null,
+						trustedOrigins = [];
+
+					for (key in this._trustedOrigins)
+					{
+						trustedOrigins.push(key);
+					}
+
+					return trustedOrigins;
+				},
+
+
 				getWindow: function(windowName, windowOnly)
 				{
+					var winObj = null;
+
 					windowOnly = this._setDefault(windowOnly, true);
 
-					if (this.isRegistered(windowName))
+					winObj = this._getWindow(windowName);
+
+
+					if (this._isType(winObj))
 					{
 						if (windowOnly)
 						{
-							return this._windows[windowName].win;
+							return winObj.win;
 						}
 						else
 						{
-							return this._windows[windowName];
+							return {origin: winObj.origin, win: winObj.win};
 						}
 					}
 				},
@@ -122,6 +150,8 @@ if (jQuery != undefined && window.postMessage != undefined)
 
 					if (this._isType(windowName, "string") && windowName != "default" && this._isType(win) && !this.isRegistered(windowName))
 					{
+						this.addTrustedOrigin(origin);
+
 						this._windows[windowName] = {origin: origin, win: win};
 
 						if (this._defaultWindow == null || isDefault)
@@ -140,12 +170,33 @@ if (jQuery != undefined && window.postMessage != undefined)
 				/*************************/
 				_create: function()
 				{
-					var autoRegister = $(scriptTag).data("autoregister");
+					var $scriptTag = $(scriptTag),
+						autoRegister = null,
+						i = 0,
+						trustedOrigins = null;
 
+
+					autoRegister = $scriptTag.data("autoregister");
+					trustedOrigins = $scriptTag.data("trustedorigins");
+
+
+					// Set widget auto-register setting from the script tag.
 					if (this._isType(autoRegister))
 					{
 						this._autoRegister = Boolean(autoRegister);
 					}
+
+					// Add trusted origins loaded from the script tag.
+					if (this._isType(trustedOrigins, "string"))
+					{
+						trustedOrigins = trustedOrigins.split(",");
+
+						for (i = 0; i < trustedOrigins.length; i++)
+						{
+							this.addTrustedOrigin(trustedOrigins[i]);
+						}
+					}
+
 
 					this._initEvents();
 
@@ -239,6 +290,15 @@ if (jQuery != undefined && window.postMessage != undefined)
 				},
 
 
+				_getWindow: function(windowName)
+				{
+					if (this.isRegistered(windowName))
+					{
+						return this._windows[windowName];
+					}
+				},
+
+
 				_initEvents: function()
 				{
 					var $el = this.element,
@@ -249,7 +309,9 @@ if (jQuery != undefined && window.postMessage != undefined)
 						"message",
 						function(ev)
 						{
-							$plugin._processMessage.apply($plugin, [ev.originalEvent]);
+							var event = ev.originalEvent || ev;
+
+							$plugin._processMessage.apply($plugin, [event]);
 						}
 					);
 
@@ -264,6 +326,17 @@ if (jQuery != undefined && window.postMessage != undefined)
 							}
 						);
 					}
+				},
+
+
+				_isTrustedOrigin: function(origin)
+				{
+					if (this._isType(this._trustedOrigins[origin]))
+					{
+						return true;
+					}
+
+					return false;
 				},
 
 
@@ -317,6 +390,25 @@ if (jQuery != undefined && window.postMessage != undefined)
 				},
 
 
+				_parseOriginDomain: function(origin)
+				{
+					var path = null,
+						originDomain = origin.toLowerCase();
+
+					if (originDomain.length > 4 && originDomain.substr(0, 4) === "http")
+					{
+						originDomain = originDomain.replace("http://", "");
+						originDomain = originDomain.replace("https://", "");
+					}
+
+
+					path = originDomain.split("/");
+					originDomain = path[0];
+
+					return originDomain;
+				},
+
+
 				_pingChild: function(windowName, id)
 				{
 					windowName = this._setDefault(windowName, "default");
@@ -341,47 +433,54 @@ if (jQuery != undefined && window.postMessage != undefined)
 						eventName = "messageReceived",
 						identifier = ev.data.identifier,
 						message = ev.data.message,
+						originDomain = this._parseOriginDomain(ev.origin),
 						parent = null;
 
 
-					switch (ev.data.action)
+					// * = Trust any
+					// originDomain = Trust any coming from a specific domain.
+					// origin = Trust with a specific origin.
+					if (this._isTrustedOrigin("*") || this._isTrustedOrigin(originDomain) || this._isTrustedOrigin(ev.origin))
 					{
-						case "execute":
-							this._executeMethod(message.method, message.args);
-							break;
+						switch (ev.data.action)
+						{
+							case "execute":
+								this._executeMethod(message.method, message.args);
+								break;
 
-						case "ping":
+							case "ping":
 
-							// Correct origin for auto-registered parent.
-							if (this._autoRegister)
-							{
-								parent = this.getWindow("parent", false);
-
-								// Don't correct origin if it is the local file system.
-								if (this._isType(parent) && message.origin.length >= 5 && message.origin.substr(0, 5) != "file:")
+								// Correct origin for auto-registered parent.
+								if (this._autoRegister)
 								{
-									parent.origin = message.origin;
+									parent = this._getWindow("parent");
+
+									// Don't correct origin if it is the local file system.
+									if (this._isType(parent) && message.origin.length >= 5 && message.origin.substr(0, 5) != "file:")
+									{
+										parent.origin = message.origin;
+									}
 								}
-							}
 
-							this._sendMessage("pingResponse", {id: message.id, origin: window.location.origin}, "", "parent");
-							break;
+								this._sendMessage("pingResponse", {id: message.id, origin: window.location.origin}, "", "parent");
+								break;
 
-						case "pingResponse":
-							if (this._isType(this._iFrames[message.id]))
-							{
-								this._registerChildWindow(this._iFrames[message.id].contentWindow, message.origin);
+							case "pingResponse":
+								if (this._isType(this._iFrames[message.id]))
+								{
+									this._registerChildWindow(this._iFrames[message.id].contentWindow, message.origin);
 
-								delete this._iFrames[message.id];
-							}
-							break;
+									delete this._iFrames[message.id];
+								}
+								break;
 
-						case "registerChild":
-							this._registerChildWindow(message.win, message.origin);
-							break;
+							case "registerChild":
+								this._registerChildWindow(message.win, message.origin);
+								break;
 
-						default:
-							$el.trigger(eventName, [message, identifier]);
+							default:
+								$el.trigger(eventName, [message, identifier]);
+						}
 					}
 				},
 
@@ -404,7 +503,7 @@ if (jQuery != undefined && window.postMessage != undefined)
 
 					this.registerWindow(name, win, origin);
 
-					winObj = this.getWindow(name, false);
+					winObj = this._getWindow(name);
 
 					if (this._isType(winObj))
 					{
@@ -433,7 +532,7 @@ if (jQuery != undefined && window.postMessage != undefined)
 
 				_sendMessage: function(action, message, identifier, windowName)
 				{
-					var winObj = this.getWindow(windowName, false);
+					var winObj = this._getWindow(windowName);
 
 					identifier = this._setDefault(identifier, "");
 
@@ -509,6 +608,7 @@ if (jQuery != undefined && window.postMessage != undefined)
 				_childWindows: [],
 				_defaultWindow: null,
 				_iFrames: {},
+				_trustedOrigins: {},
 				_windows: {}
 			};
 

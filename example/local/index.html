@@ -59,12 +59,26 @@
 	<!-- jQuery UI - after bootstrap -->
 	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
 
-	<script src="https://cdn.rawgit.com/dbudde/windowMessenger/396ede2c/windowMessenger.js" data-autoregister="true"></script>
+	<script src="https://cdn.rawgit.com/dbudde/windowMessenger/396ede2c/windowMessenger.js"></script>
 
 	<script type="text/javascript">
 		$(window).load(
 			function()
 			{
+				// Setup child window and origin.
+				var childFrame = $("#childFrame")[0],
+					origin = window.location.origin;	// Local example means origin should be the same as iFrame
+
+				if (origin.substr(0, 4).toLowerCase() === "file")
+				{
+					origin = "*";
+				}
+
+				$(window).messenger("registerWindow", "child", childFrame.contentWindow, origin, true);
+
+
+
+
 				// Example 1 - Message Sent
 				$("#ex1").on(
 					"click",
@@ -227,7 +241,7 @@
 					</table>
                 </div>
 
-				<iframe src="frame.html" style="height: 400px;"></iframe>
+				<iframe id="childFrame" src="frame.html" style="height: 400px;"></iframe>
 			</div>
 		</div>
 	</div>
