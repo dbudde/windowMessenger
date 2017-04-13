@@ -198,6 +198,10 @@ if (jQuery != undefined && window.postMessage != undefined)
 					}
 
 
+					// Add this window's origin as a trusted origin.
+					this.addTrustedOrigin(window.location.origin);
+
+
 					this._initEvents();
 
 					if (this._autoRegister)
