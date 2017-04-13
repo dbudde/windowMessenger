@@ -77,7 +77,10 @@ if (jQuery != undefined && window.postMessage != undefined)
 						message.method = method;
 						message.args = args;
 
-						this._sendMessage("execute", message, "", windowName);
+						if (this._enableExecute)
+						{
+							this._sendMessage("execute", message, "", windowName);
+						}
 					}
 				},
 
@@ -171,12 +174,14 @@ if (jQuery != undefined && window.postMessage != undefined)
 				_create: function()
 				{
 					var $scriptTag = $(scriptTag),
+						enableExecute = null,
 						autoRegister = null,
 						i = 0,
 						trustedOrigins = null;
 
 
 					autoRegister = $scriptTag.data("autoregister");
+					enableExecute = $scriptTag.data("enableexecute");
 					trustedOrigins = $scriptTag.data("trustedorigins");
 
 
@@ -185,6 +190,14 @@ if (jQuery != undefined && window.postMessage != undefined)
 					{
 						this._autoRegister = Boolean(autoRegister);
 					}
+
+
+					// Set widget enableExecute setting.
+					if (this._isType(enableExecute))
+					{
+						this._enableExecute = Boolean(enableExecute);
+					}
+
 
 					// Add trusted origins loaded from the script tag.
 					if (this._isType(trustedOrigins, "string"))
@@ -608,6 +621,7 @@ if (jQuery != undefined && window.postMessage != undefined)
 				/*************************/
 				/*    Private Values     */
 				/*************************/
+				_enableExecute: true,
 				_autoRegister: false,
 				_childWindows: [],
 				_defaultWindow: null,
