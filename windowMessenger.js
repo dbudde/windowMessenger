@@ -453,7 +453,6 @@ if (jQuery != undefined && window.postMessage != undefined)
 						originDomain = this._parseOriginDomain(ev.origin),
 						parent = null;
 
-
 					// * = Trust any
 					// originDomain = Trust any coming from a specific domain.
 					// origin = Trust with a specific origin.
@@ -549,13 +548,13 @@ if (jQuery != undefined && window.postMessage != undefined)
 
 				_sendMessage: function(action, message, identifier, windowName)
 				{
-					var winObj = this._getWindow(windowName);
-
-					identifier = this._setDefault(identifier, "");
+					var identifier = this._setDefault(identifier, "")
+						messageData = {action: action, message: message, identifier: identifier},
+						winObj = this._getWindow(windowName);
 
 					if (winObj != undefined)
 					{
-						winObj.win.postMessage({action: action, message: message, identifier: identifier}, winObj.origin);
+						winObj.win.postMessage(messageData, winObj.origin);
 					}
 				},
 
